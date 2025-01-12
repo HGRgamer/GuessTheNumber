@@ -201,6 +201,15 @@
 
                 attempts++;
                 guessHistory.push(guess);
+
+                if (guess === randomNumber) {
+                    var audio = new Audio('https://cdn.pixabay.com/audio/2021/08/04/audio_0625c1539c.mp3');
+                    audio.play();
+                } else {
+                    var audio = new Audio('https://cdn.pixabay.com/audio/2022/03/10/audio_8b0fae46ef.mp3');
+                    audio.play();
+                }
+                
                 updateHistory();
                 updateAttempts();
 
