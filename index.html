@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Guess The Number</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+    <div class="game-container">
+        <h1>Guess The Number !</h1>
+
+        <div class="difficulty">
+            <label for="difficulty">Choose Difficulty:</label>
+            <select id="difficulty">
+                <option value="50">Easy (1-50)</option>
+                <option value="200">Medium (1-200)</option>
+                <option value="500">Hard (1-500)</option>
+            </select>
+        </div>
+        <br>
+        <hr>
+        <div class="feedback" id="feedback">Let's start guessing!</div>
+        <div class="attempts" id="attempts">Attempts: 0 / 10</div>
+
+        <form>
+            <input type="number" id="guess" placeholder="Enter your guess" />
+            <button type="submit" id="submit">Guess</button>
+            <button class="reset" id="reset">Reset Game</button>
+        </form>
+
+        <div class="history" id="history" style="overflow-y: visible;">Previous guesses will appear here.</div>
+
+    </div>
+
+    <div class="game-container">
+        <div class="wins-looses">
+            <h1 class="wins">
+                Wins:
+                <a id="wins">0</a>
+            </h1>
+            <h1 class="looses">
+                Looses:
+                <a id="looses">0</a>
+            </h1>
+        </div>
+        <hr>
+
+        <div>
+            <h1>Match History</h1>
+            <div id="match-history">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Match</th>
+                            <th>Result</th>
+                            <th>Attempts</th>
+                            <th>Difficulty</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+
+        <script>
+            const feedback = document.getElementById('feedback');
+            const history = document.getElementById('history');
+            const guessInput = document.getElementById('guess');
+            const difficultySelect = document.getElementById('difficulty');
+            const resetButton = document.getElementById('reset');
+            const submitButton = document.getElementById('submit');
+
+            let maxNumber = parseInt(difficultySelect.value);
+            let randomNumber = generateRandomNumber(maxNumber);
+            let attempts = 0;
+            let guessHistory = [];
+
+            let matchHistory = [];
+
+            function addMatchHistory() {
+                const result = hasWon() ? "Win" : "Loss";
+                matchHistory.push({
+                    result,
+                    attempts,
+                    difficulty: difficultySelect.value,
+                });
+                updateMatchHistory();
+            }
+
+            function resetMatchHistory() {
+                matchHistory = [];
+            }
+
+            function updateMatchHistory() {
+                const winsElement = document.getElementById('wins');
+                const loosesElement = document.getElementById('looses');
+                let wins = 0;
+                let looses = 0;
+
+                matchHistory.forEach(match => {
+                    if (match.result === "Win") {
+                        wins++;
+                    } else {
+                        looses++;
+                    }
+                });
+
+                winsElement.textContent = wins;
+                loosesElement.textContent = looses;
+
+                const matchHistoryElement = document.getElementById('match-history');
+                matchHistoryElement.innerHTML = `
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Match</th>
+                            <th>Result</th>
+                            <th>Attempts</th>
+                            <th>Difficulty</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${matchHistory.map((match, index) => `
+                            <tr style='color: ${match.result === "Win" ? "lightgreen" : "red"}'>
+                                <td>Match ${index + 1}</td>
+                                <td>${match.result}</td>
+                                <td>${match.attempts}</td>
+                                <td style="color: ${match.difficulty === "50" ? "green" : match.difficulty === "200" ? "orange" : "red"}">${match.difficulty === "50" ? "Easy (1-50)" : match.difficulty === "200" ? "Medium (1-200)" : "Hard (1-500)"}</td>
+                            </tr>
+                        `).join('')}
+                    </tbody>
+                </table>
+            `;
+            }
+
+            function generateRandomNumber(max) {
+                return Math.floor(Math.random() * max) + 1;
+            }
+
+            function numberToText(guess) {
+                var text = '';
+                if (Math.abs(guess - randomNumber) === 1) {
+                    text = "Close! Keep guessing.";
+                } else if (guess < randomNumber) {
+                    text = Math.abs(guess - randomNumber) > 3 ? "Too low! Try again." : "Just a little Low! Keep guessing.";
+                } else if (guess > randomNumber) {
+                    text = Math.abs(guess - randomNumber) > 3 ? "Too high! Try again." : "Just a little High! Keep guessing.";
+                } else {
+                    text = `Correct! You guessed it in ${attempts} attempts.`;
+                }
+                return text;
+            }
+
+            function updateHistory() {
+                history.innerHTML = `<ul>Your guesses: ${guessHistory.map(guess => `<li>${guess} (${numberToText(guess)})</li>`).join('')} </ul>`;
+            }
+
+            function updateAttempts() {
+                document.getElementById('attempts').textContent = `Attempts: ${attempts} / 10`;
+            }
+
+            function resetGame() {
+                maxNumber = parseInt(difficultySelect.value);
+                randomNumber = generateRandomNumber(maxNumber);
+                attempts = 0;
+                updateAttempts();
+                guessHistory = [];
+                feedback.textContent = "Let's start guessing!";
+                history.textContent = "Previous guesses will appear here.";
+                guessInput.value = '';
+            }
+
+            function isGameOver() {
+                return attempts === 10 || guessHistory.includes(randomNumber);
+            }
+
+            function hasWon() {
+                return guessHistory.includes(randomNumber);
+            }
+
+            submitButton.addEventListener('click', () => {
+                //to avoid mistakenly clicking Guess
+                if (guessInput.value === '') return;
+
+                //disable the button after 10 attempts/after game is over
+                if (isGameOver()) {
+                    feedback.textContent = hasWon() ? "You already won! Please reset the game." : "You already lost! Please reset the game.";
+                    return;
+                }
+
+                const guess = parseInt(guessInput.value);
+                if (isNaN(guess) || guess < 1 || guess > maxNumber) {
+                    feedback.textContent = `Please enter a number between 1 and ${maxNumber}.`;
+                    return;
+                }
+
+                attempts++;
+                guessHistory.push(guess);
+                updateHistory();
+                updateAttempts();
+
+                feedback.textContent = numberToText(guess);
+
+                if (isGameOver()) {
+                    addMatchHistory();
+                    feedback.textContent = hasWon() ? `Congratulations! You guessed it in ${attempts} attempts.` : `Game Over! The number was ${randomNumber}.`;
+                }
+
+                guessInput.value = '';
+            });
+
+            document.querySelector('form').addEventListener('submit', (e) => {
+                e.preventDefault();
+                submitButton.click();
+            });
+
+            difficultySelect.addEventListener('change', resetGame);
+            resetButton.addEventListener('click', resetGame);
+        </script>
+</body>
+
+</html>
